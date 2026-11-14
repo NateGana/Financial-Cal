@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ROAMLY - My Travel Bucket List & World Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--navy:#173247;--ocean:#347D96;--teal:#70AFA6;--cream:#F8F5EE;--soft:#EEF1F1;--muted:#8B969B;--orange:#E6A174;--gold:#D9B97B;--sage:#91A88D;--pink:#E7B9BC;--sky:#A9C9DB;--green:#3f9d6b;--r:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--cream);color:var(--navy);font-size:15px;line-height:1.5}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;font-weight:700;line-height:1.15}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ocean);outline-offset:2px}
+.app{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+.side{background:var(--navy);color:#dbe6ec;padding:22px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;overflow-y:auto;z-index:50}
+.logo{display:flex;gap:10px;align-items:center;padding:0 8px 22px}
+.logo b{font-family:Fraunces,serif;font-size:22px;color:#fff;letter-spacing:.04em;display:block;line-height:1}
+.logo small{font-size:10px;letter-spacing:.18em;color:var(--teal)}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button{display:flex;gap:12px;align-items:center;background:none;border:0;color:inherit;padding:10px 12px;border-radius:10px;text-align:left}
+.nav button:hover{background:rgba(255,255,255,.07)}
+.nav button.on{background:var(--ocean);color:#fff}
+.nav svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.side .foot{margin-top:auto;padding:16px 10px 0;font-size:12px;color:var(--muted)}
+.main{min-width:0}
+.top{display:flex;align-items:center;gap:14px;padding:14px 32px;background:#fff;border-bottom:1px solid var(--soft);position:sticky;top:0;z-index:40}
+.top input{flex:1;max-width:420px;border:1px solid var(--soft);background:var(--cream);border-radius:999px;padding:9px 16px}
+.burger{display:none;background:none;border:0;font-size:22px}
+.avatar{margin-left:auto;display:flex;align-items:center;gap:10px;font-weight:500}
+.avatar i{width:34px;height:34px;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;font-style:normal;font-weight:600}
+.page{padding:28px 32px 60px;max-width:1280px}
+.hero{border-radius:24px;padding:56px 48px;color:#fff;background:radial-gradient(900px 300px at 85% 0,rgba(112,175,166,.55),transparent 60%),radial-gradient(700px 400px at 10% 110%,rgba(230,161,116,.45),transparent 60%),linear-gradient(135deg,#173247,#347D96);margin-bottom:28px}
+.hero p.k{font-size:13px;letter-spacing:.14em;color:var(--gold);margin-bottom:14px}
+.hero h1{font-size:clamp(30px,4.6vw,52px);max-width:680px}
+.hero p.s{max-width:560px;margin:16px 0 26px;color:#dbe6ec;font-size:17px}
+.btn{border:0;border-radius:999px;padding:11px 22px;font-weight:600;background:var(--orange);color:var(--navy);transition:transform .15s}
+.btn:hover{transform:translateY(-1px)}
+.btn.alt{background:transparent;border:1.5px solid rgba(255,255,255,.6);color:#fff}
+.btn.dark{background:var(--navy);color:#fff}
+.btn.line{background:#fff;border:1.5px solid var(--soft);color:var(--navy)}
+.btn.sm{padding:6px 14px;font-size:13px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.head{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.head h2{font-size:30px}
+.head p{color:var(--muted)}
+h3.sec{font-size:21px;margin:30px 0 14px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.stat{background:#fff;border-radius:var(--r);padding:18px;box-shadow:0 2px 10px rgba(23,50,71,.06)}
+.stat b{font-family:Fraunces,serif;font-size:34px;display:block}
+.stat span{color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+.card{background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:0 2px 10px rgba(23,50,71,.06);display:flex;flex-direction:column}
+.cover{height:130px;padding:12px;display:flex;justify-content:space-between;align-items:flex-start;color:#fff}
+.cover span{background:rgba(23,50,71,.55);padding:3px 10px;border-radius:999px;font-size:12px}
+.cover .fav{background:none;border:0;font-size:20px;color:#fff;padding:0}
+.body{padding:16px;display:flex;flex-direction:column;gap:6px;flex:1}
+.body h3{font-size:19px}
+.meta{color:var(--muted);font-size:13px}
+.tag{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--soft)}
+.tag.must{background:var(--pink)}.tag.high{background:var(--orange)}.tag.normal{background:var(--sky)}.tag.someday{background:var(--soft)}
+.acts{margin-top:auto;padding-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.acts select{border:1px solid var(--soft);border-radius:8px;padding:4px 6px;background:#fff;font-size:13px}
+.link{background:none;border:0;color:var(--ocean);font-weight:600;font-size:13px;padding:0}
+.link.del{color:#b5524a}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.chip{border:1.5px solid var(--soft);background:#fff;border-radius:999px;padding:6px 16px;font-size:13px;font-weight:500}
+.chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.bar{height:9px;background:var(--soft);border-radius:99px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--teal);border-radius:99px}
+.panel{background:#fff;border-radius:var(--r);padding:20px;box-shadow:0 2px 10px rgba(23,50,71,.06)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+#map{height:min(68vh,620px);border-radius:var(--r);box-shadow:0 2px 10px rgba(23,50,71,.1)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:12px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.empty{background:#fff;border:2px dashed var(--soft);border-radius:var(--r);padding:36px;text-align:center;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--soft)}
+th{color:var(--muted);font-weight:500}
+.stamp{border:2px dashed var(--teal);border-radius:var(--r);padding:20px;text-align:center;background:#fff}
+.stamp.lock{opacity:.4;filter:grayscale(1)}
+.stamp b{font-family:Fraunces,serif;display:block;font-size:17px;margin:8px 0 2px}
+.stamp svg{width:34px;height:34px;fill:var(--gold);stroke:var(--navy);stroke-width:1.2}
+.modal{position:fixed;inset:0;background:rgba(23,50,71,.55);display:grid;place-items:center;z-index:100;padding:16px}
+.modal form{background:#fff;border-radius:20px;padding:26px;width:min(560px,100%);max-height:92vh;overflow-y:auto}
+.modal h3{font-size:24px;margin-bottom:16px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fields label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:500}
+.fields .full{grid-column:1/-1}
+.fields input,.fields select,.fields textarea{border:1.5px solid var(--soft);border-radius:10px;padding:9px 11px;background:var(--cream)}
+.modal .row{justify-content:flex-end;margin-top:18px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 22px;border-radius:999px;z-index:200;font-size:14px}
+.note{font-size:12px;color:var(--muted);margin-top:10px}
+@media(max-width:860px){.app{grid-template-columns:1fr}.side{position:fixed;left:0;top:0;width:250px;transform:translateX(-100%);transition:transform .2s}.side.open{transform:none}.burger{display:block}.page{padding:20px 16px 50px}.top{padding:12px 16px}.hero{padding:34px 22px}.fields{grid-template-columns:1fr}.avatar span{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side" id="side">
+<div class="logo">
+<svg width="38" height="38" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="none" stroke="#70AFA6" stroke-width="2"/><path d="M20 6l5 14-5 14-5-14z" fill="#E6A174"/><circle cx="20" cy="20" r="2.5" fill="#173247"/></svg>
+<div><b>ROAMLY</b><small>MY WORLD JOURNAL</small></div>
+</div>
+<nav class="nav" id="nav"></nav>
+<div class="foot">Digital collectibles only. Your data stays in this browser.</div>
+</aside>
+<div class="main">
+<div class="top">
+<button class="burger" id="burger" aria-label="Menu">&#9776;</button>
+<input id="q" type="search" placeholder="Search places, trips and journals">
+<div class="avatar"><span>Traveler</span><i>T</i></div>
+</div>
+<main class="page" id="page"></main>
+</div>
+</div>
+<script>
+const KEY='roamly_v1';
+const CONT=['Asia','Europe','North America','South America','Africa','Oceania','Antarctica'];
+const CATS=['Beach','Mountain','City','Historical Landmark','Tourist Attraction','Nature','Island','Resort','Museum','Adventure','Food Destination','Restaurant','Religious Site','Other'];
+const PRI=['MUST VISIT','HIGH PRIORITY','NORMAL','SOMEDAY'];
+const STAT=['DREAMING','SAVED','PLANNING','BOOKED','COMPLETED','CANCELLED'];
+const TSTAT=['PLANNING','UPCOMING','ONGOING','COMPLETED','CANCELLED'];
+const EXP=['Flights','Transportation','Accommodation','Food','Activities','Shopping','Tickets','Travel Insurance','Other Expenses'];
+const COVER={Beach:['#347D96','#70AFA6'],Mountain:['#173247','#91A88D'],City:['#173247','#E7B9BC'],'Historical Landmark':['#D9B97B','#173247'],Nature:['#91A88D','#347D96'],Island:['#70AFA6','#A9C9DB'],Resort:['#E6A174','#E7B9BC'],Adventure:['#E6A174','#173247']};
+const ICON={Overview:'M3 11l9-8 9 8M5 10v10h14V10',Map:'M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',Visited:'M20 6L9 17l-5-5',Bucket:'M12 21s-8-5-8-11a4.5 4.5 0 018-2.8A4.5 4.5 0 0120 10c0 6-8 11-8 11z',Journal:'M4 4h12a4 4 0 014 4v12H8a4 4 0 01-4-4V4z',Trips:'M2 12l20-8-8 18-2-8-10-2z',Goals:'M12 2a10 10 0 100 20 10 10 0 000-20zM12 8a4 4 0 100 8 4 4 0 000-8z',Passport:'M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z'};
+const VIEWS=[['Overview','Overview'],['Map','My Travel Map'],['Visited',"Places I've Visited"],['Bucket','My Bucket List'],['Journal','Travel Journal'],['Trips','Trips & Budget'],['Goals','Travel Goals'],['Passport','Travel Passport']];
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=s=>document.querySelector(s);
+function seed(){
+return{places:[
+{id:uid(),type:'visited',name:'Baguio City',country:'Philippines',continent:'Asia',cat:'City',lat:16.4023,lng:120.596,date:'2024-02-14',rating:5,notes:'Cool weather and strawberry taho.',fav:true,visits:[{date:'2023-05-10'},{date:'2024-02-14'}]},
+{id:uid(),type:'visited',name:'El Nido, Palawan',country:'Philippines',continent:'Asia',cat:'Beach',lat:11.1784,lng:119.3931,date:'2025-04-20',rating:5,notes:'Island hopping at sunrise.',fav:false,visits:[{date:'2025-04-20'}]},
+{id:uid(),type:'visited',name:'Singapore',country:'Singapore',continent:'Asia',cat:'City',lat:1.3521,lng:103.8198,date:'2025-11-02',rating:4,notes:'Gardens by the Bay at night.',fav:false,visits:[{date:'2025-11-02'}]},
+{id:uid(),type:'want',name:'Kyoto',country:'Japan',continent:'Asia',cat:'Historical Landmark',lat:35.0116,lng:135.7681,priority:'MUST VISIT',status:'PLANNING',budget:2500,notes:'Fushimi Inari at dawn.'},
+{id:uid(),type:'want',name:'Santorini',country:'Greece',continent:'Europe',cat:'Island',lat:36.3932,lng:25.4615,priority:'HIGH PRIORITY',status:'SAVED',budget:3200,notes:''},
+{id:uid(),type:'want',name:'Banff National Park',country:'Canada',continent:'North America',cat:'Mountain',lat:51.4968,lng:-115.9281,priority:'NORMAL',status:'DREAMING',budget:2800,notes:''}],
+journal:[{id:uid(),title:'Sunrise over Palawan',place:'El Nido, Palawan',date:'2025-04-21',story:'We left the dock before six and watched the lagoon turn gold.',vis:'PRIVATE'}],
+trips:[{id:uid(),name:'Japan Adventure',dest:'Kyoto',start:'2027-03-10',end:'2027-03-20',budget:2500,cur:'USD',status:'PLANNING'}],
+expenses:[]};}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.places)return d}catch(e){}return seed()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+let S=load(),view='Overview',mapFilter='all',bFilter='ALL',bSort='priority',selTrip=null,map=null,chart=null,query='';
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
+function nav(v){view=v;query='';$('#q').value='';$('#side').classList.remove('open');render();scrollTo(0,0)}
+function renderNav(){$('#nav').innerHTML=VIEWS.map(([k,l])=>`<button class="${k===view?'on':''}" title="${l}" onclick="nav('${k}')"><svg viewBox="0 0 24 24"><path d="${ICON[k]}"/></svg>${l}</button>`).join('')}
+const visited=()=>S.places.filter(p=>p.type==='visited');
+const wants=()=>S.places.filter(p=>p.type==='want');
+const uniq=a=>[...new Set(a.filter(Boolean))];
+function cover(p,extra){const c=COVER[p.cat]||['#347D96','#E6A174'];return `<div class="cover" style="background:linear-gradient(135deg,${c[0]},${c[1]})"><span>${esc(p.cat)}</span>${extra||''}</div>`}
+function fmt(d){if(!d)return'';const x=new Date(d+'T00:00:00');return isNaN(x)?d:x.toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'})}
+function stars(n){return'&#9733;'.repeat(n||0)+'&#9734;'.repeat(5-(n||0))}
+function field(f,v){const val=v==null?'':v;const cl=f.full?' class="full"':'';
+if(f.t==='select')return `<label${cl}>${f.l}<select name="${f.k}">${f.o.map(o=>`<option ${String(o)===String(val)?'selected':''}>${o}</option>`).join('')}</select></label>`;
+if(f.t==='textarea')return `<label${cl}>${f.l}<textarea name="${f.k}" rows="3">${esc(val)}</textarea></label>`;
+return `<label${cl}>${f.l}<input name="${f.k}" type="${f.t||'text'}" value="${esc(val)}" ${f.req?'required':''} ${f.t==='number'?'step="any"':''}></label>`}
+function openForm(title,fields,vals,cb){
+const m=document.createElement('div');m.className='modal';
+m.innerHTML=`<form><h3>${title}</h3><div class="fields">${fields.map(f=>field(f,(vals||{})[f.k])).join('')}</div><div class="row"><button type="button" class="btn line" id="cx">Cancel</button><button class="btn dark">Save</button></div></form>`;
+document.body.appendChild(m);
+m.querySelector('#cx').onclick=()=>m.remove();
+m.onclick=e=>{if(e.target===m)m.remove()};
+m.querySelector('form').onsubmit=e=>{e.preventDefault();const o=Object.fromEntries(new FormData(e.target));cb(o);m.remove();save();render()};
+const first=m.querySelector('input');if(first)first.focus()}
+const num=v=>v===''||v==null||isNaN(parseFloat(v))?null:parseFloat(v);
+function placeFields(kind){
+const base=[{k:'name',l:'Destination name',req:1,full:1},{k:'country',l:'Country',req:1},{k:'continent',l:'Continent',t:'select',o:CONT},{k:'cat',l:'Category',t:'select',o:CATS},{k:'lat',l:'Latitude (optional)',t:'number'},{k:'lng',l:'Longitude (optional)',t:'number'}];
+if(kind==='visited')return base.concat([{k:'date',l:'Travel date',t:'date',req:1},{k:'rating',l:'Rating',t:'select',o:[5,4,3,2,1]},{k:'notes',l:'Memory or notes',t:'textarea',full:1}]);
+return base.concat([{k:'priority',l:'Priority',t:'select',o:PRI},{k:'status',l:'Status',t:'select',o:STAT.filter(s=>s!=='COMPLETED')},{k:'budget',l:'Estimated budget (USD)',t:'number'},{k:'notes',l:'Why I want to visit',t:'textarea',full:1}])}
+function addPlace(kind){openForm(kind==='visited'?'Add a visited place':'Add a dream destination',placeFields(kind),{continent:'Asia',cat:'City',rating:5,priority:'NORMAL',status:'DREAMING'},o=>{
+const p={id:uid(),type:kind,name:o.name.trim(),country:o.country.trim(),continent:o.continent,cat:o.cat,lat:num(o.lat),lng:num(o.lng),notes:o.notes||''};
+if(kind==='visited'){const ex=visited().find(x=>x.name.toLowerCase()===p.name.toLowerCase()&&x.country.toLowerCase()===p.country.toLowerCase());
+if(ex){ex.visits=(ex.visits||[]).concat({date:o.date});ex.date=o.date;ex.rating=parseInt(o.rating);toast('Added another visit to '+ex.name);return}
+p.date=o.date;p.rating=parseInt(o.rating);p.fav=false;p.visits=[{date:o.date}]}
+else{p.priority=o.priority;p.status=o.status;p.budget=num(o.budget)}
+S.places.push(p);toast('Saved')})}
+function editPlace(id){const p=S.places.find(x=>x.id===id);openForm('Edit '+esc(p.name),placeFields(p.type),p,o=>{Object.assign(p,{name:o.name.trim(),country:o.country.trim(),continent:o.continent,cat:o.cat,lat:num(o.lat),lng:num(o.lng),notes:o.notes||''});
+if(p.type==='visited'){p.date=o.date;p.rating=parseInt(o.rating)}else{p.priority=o.priority;p.status=o.status;p.budget=num(o.budget)}})}
+function delPlace(id){if(!confirm('Delete this place?'))return;S.places=S.places.filter(p=>p.id!==id);save();render()}
+function toggleFav(id){const p=S.places.find(x=>x.id===id);p.fav=!p.fav;save();render()}
+function setPri(id,v){S.places.find(x=>x.id===id).priority=v;save()}
+function setStatus(id,v){const p=S.places.find(x=>x.id===id);if(v==='COMPLETED'){
+if(confirm('Great! Do you want to record "'+p.name+'" as a visited place?')){
+openForm('Record your visit to '+esc(p.name),[{k:'date',l:'Actual travel date',t:'date',req:1},{k:'rating',l:'Rating',t:'select',o:[5,4,3,2,1]},{k:'notes',l:'Memory or notes',t:'textarea',full:1}],{rating:5,notes:p.notes},o=>{
+p.status='COMPLETED';
+const ex=visited().find(x=>x.name===p.name&&x.country===p.country);
+if(ex){ex.visits.push({date:o.date});ex.date=o.date}else S.places.push({id:uid(),type:'visited',name:p.name,country:p.country,continent:p.continent,cat:p.cat,lat:p.lat,lng:p.lng,date:o.date,rating:parseInt(o.rating),notes:o.notes,fav:false,visits:[{date:o.date}],fromBucket:p.id});
+toast('Moved to your visited places')});}
+else{render()}return}
+p.status=v;save();render()}
+function viewOverview(){
+const v=visited(),w=wants();
+const countries=uniq(v.map(p=>p.country)),conts=uniq(v.map(p=>p.continent));
+const done=S.trips.filter(t=>t.status==='COMPLETED').length;
+const recent=[...v].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,3);
+const up=S.trips.filter(t=>['PLANNING','UPCOMING','ONGOING'].includes(t.status));
+const ph=v.filter(p=>p.country==='Philippines').length;
+const wc=w.filter(p=>p.status!=='CANCELLED');
+const wcDone=S.places.filter(p=>p.type==='want'&&p.status==='COMPLETED').length;
+return `<section class="hero"><p class="k">COLLECT PLACES. CREATE MEMORIES. EXPLORE THE WORLD.</p><h1>The world is waiting for your next story.</h1><p class="s">Remember where you've been. Dream about where you're going. Plan every adventure with ROAMLY.</p><div class="row"><button class="btn" onclick="nav('Map')">Explore my world</button><button class="btn alt" onclick="nav('Visited');addPlace('visited')">Add a visited place</button><button class="btn alt" onclick="nav('Bucket');addPlace('want')">Build my bucket list</button></div></section>
+<div class="head"><div><h2>Welcome back, Traveler!</h2><p>Your travel life at a glance.</p></div></div>
+<div class="stats">${[[countries.length,'Countries visited'],[uniq(v.filter(p=>p.cat==='City').map(p=>p.name)).length,'Cities visited'],[v.length,'Places explored'],[wc.length,'Dream destinations'],[done,'Completed trips'],[S.journal.length,'Travel memories']].map(s=>`<div class="stat"><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}</div>
+<div class="two" style="margin-top:18px"><div class="panel"><h3>Exploration progress</h3><p class="meta" style="margin-top:8px">Continents visited: ${conts.length} of 7</p><div class="bar"><i style="width:${conts.length/7*100}%"></i></div><p class="meta" style="margin-top:14px">Philippine places recorded: ${ph}</p><div class="bar"><i style="width:${Math.min(ph/10,1)*100}%"></i></div><p class="meta" style="margin-top:14px">Bucket list completed: ${wcDone} of ${wcDone+wc.length}</p><div class="bar"><i style="width:${wcDone+wc.length?wcDone/(wcDone+wc.length)*100:0}%"></i></div></div>
+<div class="panel"><h3>Upcoming adventures</h3>${up.length?up.map(t=>{const d=Math.ceil((new Date(t.start+'T00:00:00')-new Date().setHours(0,0,0,0))/864e5);return `<div style="margin-top:12px"><b>${esc(t.name)}</b><div class="meta">${esc(t.dest)} - ${fmt(t.start)}</div><span class="tag">${d>0?d+' days to go':d===0?'Starts today':'In progress or past'}</span></div>`}).join(''):'<p class="meta" style="margin-top:8px">No upcoming trips yet. Plan one in Trips & Budget.</p>'}</div></div>
+<h3 class="sec">Recently visited</h3>${recent.length?`<div class="grid">${recent.map(visitedCard).join('')}</div>`:'<div class="empty">Add the first place you have been to.</div>'}
+<h3 class="sec">Dream destinations</h3>${wc.length?`<div class="grid">${wc.slice(0,3).map(wantCard).join('')}</div>`:'<div class="empty">Save the places you dream of visiting.</div>'}
+${S.journal.length?`<h3 class="sec">Recent travel memories</h3><div class="grid">${S.journal.slice(-3).map(journalCard).join('')}</div>`:''}`}
+function visitedCard(p){const n=(p.visits||[]).length;return `<article class="card">${cover(p,`<button class="fav" onclick="toggleFav('${p.id}')" aria-label="Favorite">${p.fav?'&#9733;':'&#9734;'}</button>`)}<div class="body"><h3>${esc(p.name)}</h3><div class="meta">${esc(p.country)} - ${fmt(p.date)}${n>1?' - '+n+' visits':''}</div><div style="color:var(--gold)">${stars(p.rating)}</div><p class="meta">${esc(p.notes)}</p><div class="acts"><button class="link" onclick="editPlace('${p.id}')">Edit</button><button class="link del" onclick="delPlace('${p.id}')">Delete</button></div></div></article>`}
+function wantCard(p){const k={'MUST VISIT':'must','HIGH PRIORITY':'high',NORMAL:'normal',SOMEDAY:'someday'}[p.priority];return `<article class="card">${cover(p)}<div class="body"><h3>${esc(p.name)}</h3><div class="meta">${esc(p.country)}${p.budget?' - est. $'+Number(p.budget).toLocaleString():''}</div><div><span class="tag ${k}">${p.priority}</span> <span class="tag">${p.status}</span></div><p class="meta">${esc(p.notes)}</p>${view==='Bucket'?`<div class="acts"><select aria-label="Priority" onchange="setPri('${p.id}',this.value)">${PRI.map(o=>`<option ${o===p.priority?'selected':''}>${o}</option>`).join('')}</select><select aria-label="Status" onchange="setStatus('${p.id}',this.value)">${STAT.map(o=>`<option ${o===p.status?'selected':''}>${o}</option>`).join('')}</select><button class="link" onclick="editPlace('${p.id}')">Edit</button><button class="link del" onclick="delPlace('${p.id}')">Delete</button></div>`:''}</div></article>`}
+function journalCard(j){return `<article class="card"><div class="body"><span class="tag">${j.vis}</span><h3>${esc(j.title)}</h3><div class="meta">${esc(j.place)} - ${fmt(j.date)}</div><p>${esc(j.story)}</p>${view==='Journal'?`<div class="acts"><button class="link del" onclick="delJournal('${j.id}')">Delete</button></div>`:''}</div></article>`}
+function viewVisited(){
+let list=visited();if(query)list=list.filter(p=>(p.name+p.country+p.notes).toLowerCase().includes(query));
+list.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+return `<div class="head"><div><h2>Places I've visited</h2><p>Adding the same place again records another visit instead of a duplicate.</p></div><button class="btn dark" onclick="addPlace('visited')">Add a visited place</button></div>${list.length?`<div class="grid">${list.map(visitedCard).join('')}</div>`:'<div class="empty">Nothing here yet. Add a place you have been to.</div>'}`}
+function viewBucket(){
+let list=wants();if(query)list=list.filter(p=>(p.name+p.country+p.notes).toLowerCase().includes(query));
+const all=list;
+if(bFilter!=='ALL')list=list.filter(p=>p.status===bFilter);
+const sorters={priority:(a,b)=>PRI.indexOf(a.priority)-PRI.indexOf(b.priority),recent:()=>0,alpha:(a,b)=>a.name.localeCompare(b.name),budget:(a,b)=>(b.budget||0)-(a.budget||0)};
+list=[...list].sort(sorters[bSort]);
+if(bSort==='recent')list.reverse();
+return `<div class="head"><div><h2>My travel bucket list</h2><p>Every place you dream of seeing.</p></div><button class="btn dark" onclick="addPlace('want')">Add a dream destination</button></div>
+<div class="chips">${['ALL','DREAMING','SAVED','PLANNING','BOOKED','COMPLETED'].map(s=>`<button class="chip ${bFilter===s?'on':''}" onclick="bFilter='${s}';render()">${s==='ALL'?'All destinations':s[0]+s.slice(1).toLowerCase()}</button>`).join('')}<select class="chip" aria-label="Sort" onchange="bSort=this.value;render()">${[['priority','Highest priority'],['recent','Recently added'],['alpha','Alphabetical'],['budget','Estimated budget']].map(o=>`<option value="${o[0]}" ${bSort===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div>
+${list.length?`<div class="grid">${list.map(wantCard).join('')}</div>`:'<div class="empty">No destinations match this filter.</div>'}`}
+function viewMap(){return `<div class="head"><div><h2>My travel map</h2><p>Only places you added yourself appear here. Nothing is tracked.</p></div><div class="row"><button class="btn dark" onclick="addPlace('visited')">Add visited</button><button class="btn line" onclick="addPlace('want')">Add dream</button></div></div>
+<div class="chips">${[['all','All places'],['visited','Visited'],['want','Want to visit'],['trip','Planned trips'],['fav','Favorites']].map(f=>`<button class="chip ${mapFilter===f[0]?'on':''}" onclick="mapFilter='${f[0]}';render()">${f[1]}</button>`).join('')}</div>
+<div id="map"></div><div class="legend"><span><i style="background:#3f9d6b"></i>Visited</span><span><i style="background:#E6A174"></i>Want to visit</span><span><i style="background:#347D96"></i>Planned trip</span><span><i style="background:#D9B97B"></i>Favorite</span></div><p class="note">Places without coordinates are saved but have no marker. Map tiles by OpenStreetMap contributors.</p>`}
+function drawMap(){
+if(map){map.remove();map=null}
+if(!window.L)return;
+map=L.map('map',{worldCopyJump:true}).setView([20,10],2);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+const tripDest=S.trips.filter(t=>['PLANNING','UPCOMING','ONGOING'].includes(t.status)).map(t=>t.dest.toLowerCase());
+const pts=[];
+S.places.forEach(p=>{if(p.lat==null||p.lng==null)return;
+const isTrip=p.type==='want'&&tripDest.some(d=>p.name.toLowerCase().includes(d));
+const kind=p.fav?'fav':isTrip?'trip':p.type;
+if(mapFilter!=='all'&&mapFilter!==kind&&!(mapFilter==='fav'&&p.fav))return;
+if(p.type==='want'&&p.status==='COMPLETED')return;
+const col={visited:'#3f9d6b',want:'#E6A174',trip:'#347D96',fav:'#D9B97B'}[kind];
+const st=p.type==='visited'?'Visited '+fmt(p.date):p.status;
+L.circleMarker([p.lat,p.lng],{radius:9,color:'#fff',weight:2,fillColor:col,fillOpacity:.95}).addTo(map).bindPopup(`<b>${esc(p.name)}</b><br>${esc(p.country)}<br><i>${esc(st)}</i><br>${esc(p.notes||'')}`);
+pts.push([p.lat,p.lng])});
+if(pts.length)map.fitBounds(pts,{padding:[40,40],maxZoom:5})}
+function viewJournal(){
+let list=S.journal;if(query)list=list.filter(j=>(j.title+j.place+j.story).toLowerCase().includes(query));
+return `<div class="head"><div><h2>Travel journal</h2><p>Private entries never leave this browser.</p></div><button class="btn dark" onclick="addJournal()">Write an entry</button></div>${list.length?`<div class="grid">${[...list].reverse().map(journalCard).join('')}</div>`:'<div class="empty">Write your first travel memory.</div>'}`}
+function addJournal(){openForm('New journal entry',[{k:'title',l:'Entry title',req:1,full:1},{k:'place',l:'Destination',req:1},{k:'date',l:'Travel date',t:'date',req:1},{k:'vis',l:'Visibility',t:'select',o:['PRIVATE','PUBLIC','UNLISTED']},{k:'story',l:'Your story',t:'textarea',full:1}],{vis:'PRIVATE'},o=>{S.journal.push({id:uid(),title:o.title,place:o.place,date:o.date,vis:o.vis,story:o.story});toast('Entry saved')})}
+function delJournal(id){if(!confirm('Delete this entry?'))return;S.journal=S.journal.filter(j=>j.id!==id);save();render()}
+function spent(t){return S.expenses.filter(e=>e.trip===t.id).reduce((a,e)=>a+e.amount,0)}
+function viewTrips(){
+if(!selTrip||!S.trips.find(t=>t.id===selTrip))selTrip=S.trips[0]&&S.trips[0].id;
+const t=S.trips.find(x=>x.id===selTrip);
+let h=`<div class="head"><div><h2>Trips & budget</h2><p>Plan a trip, then track every expense against its budget.</p></div><button class="btn dark" onclick="addTrip()">Create a trip</button></div>`;
+if(!S.trips.length)return h+'<div class="empty">Create your first trip.</div>';
+h+=`<div class="chips">${S.trips.map(x=>`<button class="chip ${x.id===selTrip?'on':''}" onclick="selTrip='${x.id}';render()">${esc(x.name)}</button>`).join('')}</div>`;
+const sp=spent(t),rem=t.budget-sp,ex=S.expenses.filter(e=>e.trip===t.id);
+h+=`<div class="panel"><div class="head" style="margin:0 0 12px"><div><h3>${esc(t.name)}</h3><p class="meta">${esc(t.dest)} - ${fmt(t.start)} to ${fmt(t.end)}</p></div><div class="row"><select aria-label="Trip status" class="chip" onchange="setTripStatus('${t.id}',this.value)">${TSTAT.map(s=>`<option ${s===t.status?'selected':''}>${s}</option>`).join('')}</select><button class="link del" onclick="delTrip('${t.id}')">Delete trip</button></div></div>
+<div class="stats"><div class="stat"><b>${t.budget.toLocaleString()}</b><span>Budget (${t.cur})</span></div><div class="stat"><b>${sp.toLocaleString()}</b><span>Spent</span></div><div class="stat"><b style="color:${rem<0?'#b5524a':'inherit'}">${rem.toLocaleString()}</b><span>Remaining</span></div></div><div class="bar"><i style="width:${t.budget?Math.min(sp/t.budget,1)*100:0}%;background:${rem<0?'#b5524a':'var(--teal)'}"></i></div></div>
+<div class="two" style="margin-top:18px"><div class="panel"><div class="head" style="margin-bottom:8px"><h3>Expenses</h3><button class="btn sm dark" onclick="addExpense()">Add expense</button></div>${ex.length?`<table><tr><th>Item</th><th>Category</th><th>Date</th><th>${t.cur}</th><th></th></tr>${ex.map(e=>`<tr><td>${esc(e.name)}</td><td>${esc(e.cat)}</td><td>${fmt(e.date)}</td><td>${e.amount.toLocaleString()}</td><td><button class="link del" onclick="delExpense('${e.id}')">x</button></td></tr>`).join('')}</table>`:'<p class="meta">No expenses yet.</p>'}<p class="note">Amounts are recorded in the trip currency. No exchange rates are applied.</p></div>
+<div class="panel"><h3>Spending by category</h3>${ex.length?'<canvas id="ch" height="220"></canvas>':'<p class="meta" style="margin-top:8px">Add an expense to see the chart.</p>'}</div></div>`;
+return h}
+function drawChart(){
+if(chart){chart.destroy();chart=null}
+const c=$('#ch');if(!c||!window.Chart)return;
+const by={};S.expenses.filter(e=>e.trip===selTrip).forEach(e=>by[e.cat]=(by[e.cat]||0)+e.amount);
+chart=new Chart(c,{type:'doughnut',data:{labels:Object.keys(by),datasets:[{data:Object.values(by),backgroundColor:['#173247','#347D96','#70AFA6','#E6A174','#D9B97B','#91A88D','#E7B9BC','#A9C9DB','#8B969B']}]},options:{plugins:{legend:{position:'bottom'}}}})}
+function addTrip(){openForm('Create a trip',[{k:'name',l:'Trip name',req:1,full:1},{k:'dest',l:'Main destination',req:1},{k:'cur',l:'Currency',t:'select',o:['USD','PHP','EUR','JPY','GBP','SGD','AUD']},{k:'start',l:'Start date',t:'date',req:1},{k:'end',l:'End date',t:'date',req:1},{k:'budget',l:'Estimated budget',t:'number',req:1},{k:'status',l:'Status',t:'select',o:TSTAT}],{cur:'USD',status:'PLANNING'},o=>{
+if(o.end<o.start){toast('End date must be after the start date');return}
+const t={id:uid(),name:o.name,dest:o.dest,start:o.start,end:o.end,budget:num(o.budget)||0,cur:o.cur,status:o.status};S.trips.push(t);selTrip=t.id;toast('Trip created')})}
+function setTripStatus(id,v){S.trips.find(t=>t.id===id).status=v;save();render()}
+function delTrip(id){if(!confirm('Delete this trip and its expenses?'))return;S.trips=S.trips.filter(t=>t.id!==id);S.expenses=S.expenses.filter(e=>e.trip!==id);save();render()}
+function addExpense(){openForm('Add an expense',[{k:'name',l:'Expense name',req:1,full:1},{k:'cat',l:'Category',t:'select',o:EXP},{k:'amount',l:'Amount',t:'number',req:1},{k:'date',l:'Date',t:'date',req:1}],{},o=>{S.expenses.push({id:uid(),trip:selTrip,name:o.name,cat:o.cat,amount:num(o.amount)||0,date:o.date});toast('Expense added')})}
+function delExpense(id){S.expenses=S.expenses.filter(e=>e.id!==id);save();render()}
+function goals(){
+const v=visited(),w=S.places.filter(p=>p.type==='want'&&p.status==='COMPLETED');
+return[['Visit 5 countries',uniq(v.map(p=>p.country)).length,5],['Visit 10 places',v.length,10],['Explore 3 continents',uniq(v.map(p=>p.continent)).length,3],['Visit 5 beaches',v.filter(p=>p.cat==='Beach').length,5],['Visit 10 historical attractions',v.filter(p=>p.cat==='Historical Landmark').length,10],['Complete 5 trips',S.trips.filter(t=>t.status==='COMPLETED').length,5],['Document 50 travel memories',S.journal.length,50],['Complete 10 bucket list destinations',w.length,10]]}
+function viewGoals(){return `<div class="head"><div><h2>Travel goals</h2><p>Progress is counted from your real records.</p></div></div><div class="grid">${goals().map(g=>{const p=Math.min(g[1]/g[2],1);return `<div class="panel"><h3 style="font-size:18px">${g[0]}</h3><p class="meta" style="margin-top:6px">${Math.min(g[1],g[2])} of ${g[2]} - ${Math.round(p*100)}%</p><div class="bar"><i style="width:${p*100}%"></i></div>${p>=1?'<span class="tag" style="margin-top:10px;background:var(--sage)">Completed</span>':''}</div>`}).join('')}</div>`}
+function viewPassport(){
+const v=visited(),cs=uniq(v.map(p=>p.country)),cn=uniq(v.map(p=>p.continent));
+const st=[['First Destination',v.length>=1],['First International Trip',v.some(p=>p.country!=='Philippines')],['Philippine Explorer',v.filter(p=>p.country==='Philippines').length>=3],['Asia Explorer',v.filter(p=>p.continent==='Asia').length>=3],['Europe Explorer',v.filter(p=>p.continent==='Europe').length>=1],['Island Hopper',v.filter(p=>p.cat==='Island').length>=2],['Beach Lover',v.filter(p=>p.cat==='Beach').length>=2],['Mountain Adventurer',v.filter(p=>p.cat==='Mountain').length>=1],['World Traveler',cs.length>=5]];
+return `<div class="head"><div><h2>Travel passport</h2><p>${st.filter(s=>s[1]).length} of ${st.length} stamps collected.</p></div></div>
+<div class="panel" style="margin-bottom:18px"><b>Traveler</b><p class="meta">Countries: ${cs.length?cs.map(esc).join(', '):'none yet'} - Continents: ${cn.length}</p></div>
+<div class="grid">${st.map(s=>`<div class="stamp ${s[1]?'':'lock'}"><svg viewBox="0 0 24 24"><path d="${ICON.Passport}"/></svg><b>${s[0]}</b><span class="meta">${s[1]?'Collected':'Locked'}</span></div>`).join('')}</div><p class="note">These are digital collectibles for fun, not official immigration stamps. Stamps unlock only from records you have saved.</p>`}
+function viewSearch(){
+const hit=S.places.filter(p=>(p.name+p.country+p.continent+p.cat).toLowerCase().includes(query)),j=S.journal.filter(x=>(x.title+x.place+x.story).toLowerCase().includes(query)),t=S.trips.filter(x=>(x.name+x.dest).toLowerCase().includes(query));
+return `<div class="head"><div><h2>Search results</h2><p>${hit.length+j.length+t.length} matches for "${esc(query)}"</p></div></div>${hit.length?`<h3 class="sec">Places</h3><div class="grid">${hit.map(p=>p.type==='visited'?visitedCard(p):wantCard(p)).join('')}</div>`:''}${t.length?`<h3 class="sec">Trips</h3><div class="grid">${t.map(x=>`<div class="panel"><h3>${esc(x.name)}</h3><p class="meta">${esc(x.dest)} - ${x.status}</p></div>`).join('')}</div>`:''}${j.length?`<h3 class="sec">Journal</h3><div class="grid">${j.map(journalCard).join('')}</div>`:''}${hit.length+j.length+t.length?'':'<div class="empty">Nothing found. Try another word.</div>'}`}
+function render(){
+renderNav();
+if(chart){chart.destroy();chart=null}
+const fn=query?viewSearch:{Overview:viewOverview,Map:viewMap,Visited:viewVisited,Bucket:viewBucket,Journal:viewJournal,Trips:viewTrips,Goals:viewGoals,Passport:viewPassport}[view];
+$('#page').innerHTML=fn();
+if(!query&&view==='Map')drawMap();
+if(!query&&view==='Trips')drawChart()}
+$('#q').addEventListener('input',e=>{query=e.target.value.trim().toLowerCase();render()});
+$('#burger').onclick=()=>$('#side').classList.toggle('open');
+render();
+</script>
+</body>
+</html>
